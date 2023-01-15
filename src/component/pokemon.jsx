@@ -3,56 +3,87 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { pokemonData } from "../redux/actions/pokemonActions";
 import { newPage } from "../redux/pokemonSlice";
-import { pokemonReducer } from "../redux/reducers/pokemonReducers";
 
 function Pokemon() {
+  const [isClicked, setIsClicked] = useState(false);
+  const [singlePokemon, setSinglePokemon] = useState([]);
+  let [num, setNum] = useState(0);
   let dispatch = useDispatch();
+  let pokemonreducerRR = useSelector(
+    (state) => state.pokemonReducer.pokemon.next
+  );
+  let url = useSelector((state) => state.pokReducer.pokemon.next);
+  let pokemonreducerBack = useSelector(
+    (state) => state.pokemonReducer.pokemon.previous
+  );
   let pokemonlist = useSelector((state) => state.pokReducer.pokemon.results);
-  let pagi = useSelector((state) => state.pokReducer.pokemon);
+  let pagination = useSelector((state) => state.pokemonReducer.pokemon.results);
+
   useEffect(() => {
     dispatch(pokemonData());
-  }, []);
-  const [singlePokemon, setSinglePokemon] = useState([]);
+  }, [pagination]);
   const getData = async (url) => {
     const res = await axios.get(url);
     setIsClicked(true);
     const data = res.data;
     setSinglePokemon(data);
-    window.scrollTo(10, 10);
   };
   const closeBtn = () => {
     setIsClicked(false);
-    // dispatch(newPage(4));
   };
-  const [isClicked, setIsClicked] = useState(false);
-  let pages = pagi.count / 20;
-
+  const getNewData = (e) => {
+    dispatch(newPage(pokemonreducerRR ? pokemonreducerRR : url));
+    setNum(num + 25);
+  };
+  const getOldData = (e) => {
+    dispatch(newPage(pokemonreducerBack));
+    setNum(num - 25);
+  };
   return (
     <>
       <div className="main">
         <div className="container">
-          {pokemonlist &&
-            pokemonlist.map((item, i) => {
-              return (
-                <>
-                  <div
-                    key={item}
-                    className="pokemonListContainer"
-                    onClick={() => getData(item.url)}
-                  >
-                    <h1>
-                      {" "}
-                      {i + 1} {item.name}
-                    </h1>
-                    <img
-                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
-                        i + 1
-                      }.png`}
-                    />
-                  </div>
-                </>
-              );
-            })}
+          {pagination
+            ? pagination.map((item, i) => {
+                return (
+                  <>
+                    <div
+                      key={item.name}
+                      className="pokemonListContainer"
+                      onClick={() => getData(item.url)}
+                    >
+                      <h1>
+                        {num + i + 1} {item.name}
+                      </h1>
+                      <img
+                        src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
+                          i + 1 + num
+                        }.png`}
+                      />
+                    </div>
+                  </>
+                );
+              })
+            : pokemonlist?.map((item, i) => {
+                return (
+                  <>
+                    <div
+                      key={item}
+                      className="pokemonListContainer"
+                      onClick={() => getData(item.url)}
+                    >
+                      <h1>
+                        {num + i + 1} {item.name}
+                      </h1>
+                      <img
+                        src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${
+                          num + 1 + i
+                        }.png`}
+                      />
+                    </div>
+                  </>
+                );
+              })}
         </div>
 
         {isClicked ? (
@@ -75,7 +106,7 @@ function Pokemon() {
               <div className="info">
                 {singlePokemon.stats.map((powers) => {
                   return (
-                    <p>
+                    <p key={powers.stat.name}>
                       {powers.stat.name} : {powers.base_stat}
                     </p>
                   );
@@ -87,7 +118,24 @@ function Pokemon() {
           <></>
         )}
       </div>
-      <div></div>
+      <div className="pagination">
+        <span
+          style={{
+            cursor: "pointer",
+          }}
+          onClick={(e) => getOldData(e)}
+        >
+          Previous
+        </span>
+        <span
+          style={{
+            cursor: "pointer",
+          }}
+          onClick={(e) => getNewData(e)}
+        >
+          Next
+        </span>
+      </div>
     </>
   );
 }

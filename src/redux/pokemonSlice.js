@@ -1,15 +1,22 @@
 import { createSlice } from "@reduxjs/toolkit";
 import axios from "axios";
-import { pokemonData } from "./actions/pokemonActions";
-import { pokemonReducer } from "./reducers/pokemonReducers";
+import { paginate, pokemonData } from "./actions/pokemonActions";
 const initialState = {
   pokemon: [],
 };
+
+export const newPage = (url) => (dispatch) => {
+  axios.get(url).then((res) => {
+    dispatch(paginate(res.data));
+  });
+};
+
 export const pokemonSlice = createSlice({
   name: "pokemon",
   initialState,
   reducers: {
-    newPage: (state, action) => {
+    paginate: (state, action) => {
+      console.log(action.payload);
       state.pokemon.push(action.payload);
     },
   },
@@ -21,13 +28,3 @@ export const pokemonSlice = createSlice({
 });
 
 export const pokReducer = pokemonSlice.reducer;
-
-export const newPage =
-  (page = 0) =>
-  (dispatch) => {
-    axios
-      .get(`https://pokeapi.co/api/v2/pokemon/?offset=${page}0&limit=20`)
-      .then((res) => {
-        dispatch(newPage(res.data));
-      });
-  };
